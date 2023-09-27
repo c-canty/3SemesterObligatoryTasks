@@ -1,7 +1,7 @@
-
 from socket import *
 from random import randint
 import json
+import threading
 
 
 def isdigit(num): 
@@ -11,7 +11,7 @@ def isdigit(num):
     except ValueError:
         return False
 
-class Submittion:
+class Submission:
     def __init__(self, action, num1, num2, answer=0): # constructor, sets answer to 0 by default
         self.action = action
         self.num1 = num1
@@ -19,19 +19,8 @@ class Submittion:
         self.answer = answer
     
 
-def runserver():
-    serverPort = 12000  # Port number
-    serverHost = '127.0.0.1'  # Host name
-
-    serverSocket = socket(AF_INET, SOCK_STREAM)
-    serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-    serverSocket.bind((serverHost, serverPort))
-    serverSocket.listen(1)
-    print("The server is ready to receive")
-
-    connectionSocket, address = serverSocket.accept()
+def handle_client(connectionSocket, address):
     print("Connection from:", address)
-
 
     ClientJSON = connectionSocket.recv(1024).decode()
     
@@ -47,7 +36,6 @@ def runserver():
     else:
         num1 = int(num1recv)
 
-
     if isdigit(num2recv) == False:
         num2 = float(num2recv)
     else:
@@ -56,39 +44,46 @@ def runserver():
     action = str(actionRecv)
     
     print("Received:", action, num1, num2)
-    
 
     def calculate(num1, num2, action):
         
         if action.lower() == "random": 
             if num1 > num2:
                 calc = randint(num2, num1) # Random number between num2 and num1
-                return Submittion(action, num2, num1, calc)
+                return Submission(action, num2, num1, calc)
             else:
                 calc = randint(num1, num2) # Random number between num1 and num2
-                return Submittion(action, num1, num2, calc)
+                return Submission(action, num1, num2, calc)
         
         elif action.lower() == "add":
             calc = num1 + num2
-            return Submittion(action, num1, num2, calc)
+            return Submission(action, num1, num2, calc)
         
         elif action.lower() == "subtract":
             calc = num1 - num2
-            return Submittion(action, num1, num2, calc)
+            return Submission(action, num1, num2, calc)
         else:
-            return Submittion(action, num1, num2, "Invalid action")
+            return Submission(action, num1, num2, "Invalid action")
 
     result = json.dumps(calculate(num1, num2, action).__dict__)
     print("Sending:", result)
     connectionSocket.send(result.encode())
     connectionSocket.close()
-    serverSocket.close()
 
-def runAgain():
+def runserver():
+    serverPort = 12000  # Port number
+    serverHost = '127.0.0.1'  # Host name
+
+    serverSocket = socket(AF_INET, SOCK_STREAM)
+    serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    serverSocket.bind((serverHost, serverPort))
+    serverSocket.listen(5)  # Allow up to 5 simultaneous connections
+    print("The server is ready to receive")
+
     while True:
-       runserver()
+        connectionSocket, address = serverSocket.accept()
+        client_thread = threading.Thread(target=handle_client, args=(connectionSocket, address))
+        client_thread.start()
 
-
-runAgain()
-
-
+if __name__ == "__main__":
+    runserver()

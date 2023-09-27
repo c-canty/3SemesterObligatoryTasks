@@ -19,7 +19,7 @@ def isdigit(s): # check if input is a digit
         return False
     
 
-class Submittion:
+class Submission:
     def __init__(self, action, num1, num2, answer=0): # constructor, sets answer to 0 by default
         self.action = action
         self.num1 = num1
@@ -63,9 +63,9 @@ def runserver():
             num2 = input("Enter the second number (Int or Float): ")
             
         
-        SendSubmittion = Submittion(action, num1, num2) # create object
+        SendSubmission = Submission(action, num1, num2) # create object
         
-        JSONSubmission = json.dumps(SendSubmittion.__dict__) # convert object to JSON
+        JSONSubmission = json.dumps(SendSubmission.__dict__) # convert object to JSON
         
         clientSocket.send(JSONSubmission.encode()) # send object to server
         
@@ -74,9 +74,9 @@ def runserver():
         
         result = json.loads(resultJSON) # convert JSON to object
         
-        ResultSubmittion = Submittion(result['action'], result['num1'], result['num2'], result['answer']) # create object
+        ResultSubmission = Submission(result['action'], result['num1'], result['num2'], result['answer']) # create object
         
-        print("From Server: ", ResultSubmittion.__str__()) # print message
+        print("From Server: ", ResultSubmission.__str__()) # print message
         clientSocket.close() # close connection
         return True
     
